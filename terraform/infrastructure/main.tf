@@ -10,6 +10,7 @@ terraform {
     resource_group_name  = "rg-tfstate-planetary-app"
     storage_account_name = "stplanetsgj"
     container_name       = "tfstate"
+    key                  = "infrastructure.tfstate"
   }
 }
 
