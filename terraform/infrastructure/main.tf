@@ -5,6 +5,12 @@ terraform {
       version = "~> 3.0"
     }
   }
+
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate-planetary-app"
+    storage_account_name = "stplanetsgj"
+    container_name       = "tfstate"
+  }
 }
 
 provider "azurerm" {

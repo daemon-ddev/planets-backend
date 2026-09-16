@@ -5,6 +5,10 @@ pipeline {
         IMAGE_NAME_DB  = 'guledjama97/planets-db-cloud'
         IMAGE_NAME_MVC = 'guledjama97/planets-mvc-cloud'
         IMAGE_TAG      = "${BUILD_NUMBER}"
+        ARM_CLIENT_ID       = credentials('azure-client-id')
+        ARM_CLIENT_SECRET   = credentials('azure-client-secret')
+        ARM_SUBSCRIPTION_ID = credentials('azure-subscription-id')
+        ARM_TENANT_ID       = credentials('azure-tenant-id')
     }
 
     stages {
@@ -44,8 +48,36 @@ pipeline {
             }
         }
 
-        stage('Terraform') {
-            steps { echo 'Terraform — coming after the break' }
+        stage('Terraform Init') {
+            steps {
+                dir('terraform/infrastructure') {
+                    sh 'terraform init -reconfigure'
+                }
+            }
+        }
+
+        stage('Terraform Plan') {
+            steps {
+                dir('terraform/infrastructure') {
+                    sh 'terraform plan -out=tfplan'
+                    sh 'terraform show -no-color tfplan > tfplan.txt'
+                }
+                archiveArtifacts artifacts: 'terraform/infrastructure/tfplan.txt',
+                                 fingerprint: true
+            }
+        }
+
+        stage('Terraform Apply') {
+            steps {
+                script {
+                    timeout(time: 15, unit: 'MINUTES') {
+                        input message: 'Apply this plan?', ok: 'Apply'
+                    }
+                }
+                dir('terraform/infrastructure') {
+                    sh 'terraform apply -auto-approve tfplan'
+                }
+            }
         }
     }
 
